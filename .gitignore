@@ -8,3 +8,7 @@ orangehrm/
 orangehrm
 node_modules
 dist
+orangehrm/*
+orangehrm/**/*
+!.gitkeep
+orangehrm/*.py
