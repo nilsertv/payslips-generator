@@ -1,0 +1,5 @@
+{
+  "name": "Generador de Boletas de Pago",
+  "description": "Aplicación web para la generación automática de boletas de pago en PDF a partir de archivos CSV de planillas administrativas y asistenciales.",
+  "requestFramePermissions": []
+}

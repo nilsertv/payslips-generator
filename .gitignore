@@ -1,0 +1,10 @@
+node_modules/
+dist/
+orangehrm/
+.vscode/
+.env
+.env.local
+.env.development.local
+orangehrm
+node_modules
+dist
