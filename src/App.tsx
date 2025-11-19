@@ -5,7 +5,6 @@ import { ProcessedRow, ProcessingStatus } from './types';
 import { parseCSV } from './utils/csvProcessor';
 import { generateSinglePDF, generateBatchZip } from './utils/pdfGenerator';
 import { FileText, DownloadCloud, RefreshCw, AlertTriangle } from 'lucide-react';
-import JSZip from 'jszip';
 
 const App: React.FC = () => {
   const [processedData, setProcessedData] = useState<ProcessedRow[] | null>(null);
