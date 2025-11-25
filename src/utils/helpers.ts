@@ -66,20 +66,60 @@ export function formatCurrency(amount: number): string {
   }).format(amount);
 }
 
-export function extractPeriod(periodString: string): { year: number; month: number } {
-  // Try to parse formats like "2024-05", "05/2024", "Mayo 2024"
-  // Defaulting to current date if fail, but trying regex first
-  const matches = periodString.match(/(\d{1,2})[\/\-](\d{4})|(\d{4})[\/\-](\d{1,2})/);
+// Mapeo de nombres de meses en español a números
+const MONTH_NAMES: Record<string, number> = {
+  'ENERO': 1,
+  'FEBRERO': 2,
+  'MARZO': 3,
+  'ABRIL': 4,
+  'MAYO': 5,
+  'JUNIO': 6,
+  'JULIO': 7,
+  'AGOSTO': 8,
+  'SEPTIEMBRE': 9,
+  'SETIEMBRE': 9, // Variante común en Perú
+  'OCTUBRE': 10,
+  'NOVIEMBRE': 11,
+  'DICIEMBRE': 12
+};
+
+export function extractPeriod(periodString: string): { year: number; month: number; isValid: boolean } {
+  // Normalizar el string
+  const normalized = periodString.trim().toUpperCase();
   
-  if (matches) {
-    if (matches[1] && matches[2]) {
-      return { month: parseInt(matches[1]), year: parseInt(matches[2]) };
-    }
-    if (matches[3] && matches[4]) {
-      return { year: parseInt(matches[3]), month: parseInt(matches[4]) };
+  // Intentar formato de texto: "JULIO 2025", "FEBRERO 2025", etc.
+  const textMatch = normalized.match(/([A-Z]+)\s+(\d{4})/);
+  if (textMatch) {
+    const monthName = textMatch[1];
+    const year = parseInt(textMatch[2]);
+    const month = MONTH_NAMES[monthName];
+    
+    if (month && year >= 1900 && year <= 2100) {
+      return { month, year, isValid: true };
     }
   }
   
+  // Intentar formatos numéricos: "2024-05", "05/2024", "2024/05", "05-2024"
+  const numericMatch = periodString.match(/(\d{1,2})[\/\-](\d{4})|(\d{4})[\/\-](\d{1,2})/);
+  
+  if (numericMatch) {
+    if (numericMatch[1] && numericMatch[2]) {
+      const month = parseInt(numericMatch[1]);
+      const year = parseInt(numericMatch[2]);
+      if (month >= 1 && month <= 12 && year >= 1900 && year <= 2100) {
+        return { month, year, isValid: true };
+      }
+    }
+    if (numericMatch[3] && numericMatch[4]) {
+      const year = parseInt(numericMatch[3]);
+      const month = parseInt(numericMatch[4]);
+      if (month >= 1 && month <= 12 && year >= 1900 && year <= 2100) {
+        return { year, month, isValid: true };
+      }
+    }
+  }
+  
+  // Si no se pudo extraer, retornar fecha actual con flag inválido
   const now = new Date();
-  return { year: now.getFullYear(), month: now.getMonth() + 1 };
+  return { year: now.getFullYear(), month: now.getMonth() + 1, isValid: false };
 }

@@ -109,7 +109,7 @@ export const generateSinglePDF = async (employee: EmployeeData, payroll: Payroll
     employee.daysWorked.toString(),
     employee.vacationDays.toString(),
     employee.absenceDays.toString(),
-    '', // Horas Extras empty
+    employee.overtimeHours > 0 ? employee.overtimeHours.toFixed(2) : '', // Horas Extras
     employee.area,
   ];
 

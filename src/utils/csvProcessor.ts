@@ -14,8 +14,8 @@ const COLUMN_VARIANTS = {
   period: ['PERIODO DE CÁLCULO', 'PERIODO', 'MES'],
   
   // Income
-  baseSalary: ['REMUNERACIÓN O JORNAL BÁSICO', 'REM.MENSUAL', 'BASICO'],
-  monthlyRemuneration: ['REM.MENSUAL', 'REMUNERACIÓN O JORNAL BÁSICO'], // Fallback
+  baseSalary: ['REMUNERACIÓN O JORNAL BÁSICO', 'BASICO'],
+  monthlyRemuneration: ['REM.MENSUAL'],
   vacationRemuneration: ['REMUNERACIÓN VACACIONAL', 'VACACIONES PAGADAS'],
   familyAllowance: ['ASIGNACIÓN FAMILIAR', 'ASIG. FAM.'],
   bonus: ['Bonos', 'BONIFICACIONES'],
@@ -24,10 +24,11 @@ const COLUMN_VARIANTS = {
   adelantosIngreso: ['OTROS INGRESOS'], 
   
   // Overtime
+  overtimeHours: ['Horas Extras', 'H.Ext.', 'Hrs. Extra'],
   overtime25: ['HORAS EXTRAS 25%', 'H.E. 25%'],
   overtime35: ['HORAS EXTRAS 35%', 'H.E. 35%'],
   overtime100: ['HORAS EXTRAS 100%', 'H.E. 100%'],
-  overtime: ['H.Ext.', 'Hrs. Extra', 'HORAS EXTRAS'],
+  overtime: ['HORAS EXTRAS'],
   
   // Deductions
   afp: ['AFP', 'SISTEMA PENSIONARIO'],
@@ -100,11 +101,21 @@ export function parseCSV(file: File): Promise<ProcessedRow[]> {
               
               if (!fullName) errors.push("Falta Nombre");
               if (!dni) errors.push("Falta DNI");
+              
+              // Validar periodo obligatorio
+              if (!periodString || periodString.trim() === '') {
+                errors.push("Falta periodo de cálculo");
+              }
 
-              const { month } = extractPeriod(periodString);
+              const periodResult = extractPeriod(periodString);
+              if (!periodResult.isValid && periodString.trim() !== '') {
+                errors.push("Formato de periodo inválido");
+              }
+              const { month } = periodResult;
 
               // Money Parsing
-              const baseSalary = parseMoney(columns.baseSalary ? row[columns.baseSalary] : (columns.monthlyRemuneration ? row[columns.monthlyRemuneration] : 0));
+              const baseSalary = parseMoney(columns.baseSalary ? row[columns.baseSalary] : 0);
+              const monthlyRemuneration = parseMoney(columns.monthlyRemuneration ? row[columns.monthlyRemuneration] : 0);
               const vacationRemuneration = parseMoney(columns.vacationRemuneration ? row[columns.vacationRemuneration] : 0);
               const familyAllowance = parseMoney(columns.familyAllowance ? row[columns.familyAllowance] : 0);
               const bonus = parseMoney(columns.bonus ? row[columns.bonus] : 0);
@@ -120,6 +131,9 @@ export function parseCSV(file: File): Promise<ProcessedRow[]> {
               const horasExtras25 = overtime25 || overtimeGeneric; 
               const horasExtras35 = overtime35;
               const horasExtras100 = overtime100;
+              
+              // Parse overtime hours from CSV column (for employee info display)
+              const overtimeHoursValue = parseMoney(columns.overtimeHours ? row[columns.overtimeHours] : 0);
 
               // Deductions
               const sppAporte = parseMoney(columns.sppAporte ? row[columns.sppAporte] : 0);
@@ -162,9 +176,9 @@ export function parseCSV(file: File): Promise<ProcessedRow[]> {
                 daysWorked,
                 vacationDays,
                 absenceDays,
-                overtimeHours: horasExtras25 + horasExtras35 + horasExtras100, // Sum of overtime hours
+                overtimeHours: overtimeHoursValue, // From CSV column "Horas Extras"
                 area: safeString(columns.area ? row[columns.area] : 'GENERAL'),
-                monthlyRemuneration: baseSalary,
+                monthlyRemuneration: monthlyRemuneration,
                 pensionSystem: afpName || pensionRegime,
                 pensionRegime,
                 periodString: periodString || "MENSUAL"
